@@ -43,6 +43,13 @@
   - [x] `lib/types.ts` 파일 생성
   - [x] User, Post, Like, Comment, Follow 타입 정의
 
+_업데이트_
+
+- [x] 이미지 자동 리사이징 기능 추가
+  - [x] `browser-image-compression` 라이브러리 설치
+  - [x] 게시물 작성 시 이미지 자동 압축 (최대 5MB, 1920px)
+  - [x] 처리 중 로딩 상태 표시
+
 ## 2. 레이아웃 구조
 
 - [x] `app/(main)/layout.tsx` 생성
@@ -60,6 +67,14 @@
 - [x] `components/layout/BottomNav.tsx`
   - [x] Mobile 전용 (50px 높이)
   - [x] 5개 아이콘: 홈, 검색, 만들기, 좋아요, 프로필
+
+_업데이트_
+
+- [x] 로그인 UI 추가
+  - [x] Header에 로그인 버튼 및 UserButton 추가 (모바일)
+  - [x] Sidebar 하단에 로그인 버튼 및 UserButton 추가 (데스크톱/태블릿)
+  - [x] SignedIn/SignedOut 컴포넌트로 조건부 렌더링
+  - [x] "만들기" 버튼을 Link에서 button으로 변경 (모달 자동 닫힘 문제 해결)
 
 ## 3. 홈 피드 페이지
 
@@ -84,6 +99,15 @@
   - [x] GET: 게시물 목록 조회 (시간 역순 정렬)
   - [x] 페이지네이션 지원 (limit, offset)
   - [x] userId 파라미터 지원 (프로필 페이지용)
+
+_업데이트_
+
+- [x] 라우트 구조 개선 (Option 1 적용)
+  - [x] `app/(main)/page.tsx`를 `app/page.tsx`로 이동
+  - [x] `app/(main)/layout.tsx`의 레이아웃을 `app/layout.tsx`에 통합
+  - [x] `app/(main)/` 디렉토리 제거
+  - [x] 사용하지 않는 `components/Navbar.tsx` 삭제
+  - [x] 루트 페이지(`/`)에서 바로 홈 피드 표시
 
 ## 4. 좋아요 기능
 
@@ -115,6 +139,21 @@
   - [x] 인증 검증 (Clerk)
 - [x] Sidebar "만들기" 버튼 연결
   - [x] CreatePostModal 열기
+
+_업데이트_
+
+- [x] 이미지 자동 리사이징 기능
+  - [x] `browser-image-compression` 라이브러리 통합
+  - [x] 업로드 전 자동 압축 (최대 5MB, 1920px)
+  - [x] 처리 중 로딩 스피너 및 상태 메시지 표시
+- [x] Next.js Image 설정
+  - [x] `next.config.ts`에 Supabase Storage 도메인 추가 (`*.supabase.co`)
+- [x] UI 개선
+  - [x] 캡션 입력 필드 텍스트 색상 수정 (text-gray-900)
+  - [x] 업로드 성공 후 페이지 새로고침 개선
+- [x] 에러 처리 강화
+  - [x] 상세한 디버깅 로그 추가
+  - [x] 사용자 친화적 에러 메시지
 
 ## 6. 댓글 기능
 
