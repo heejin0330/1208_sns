@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { PostWithUserAndStats } from "@/lib/types";
 import { formatRelativeTime, cn } from "@/lib/utils";
+import LikeButton, { LikeButtonRef } from "./LikeButton";
 
 /**
  * @file PostCard.tsx
@@ -38,6 +39,11 @@ interface PostCardProps {
 export default function PostCard({ post }: PostCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [likesCount, setLikesCount] = useState(post.likes_count);
+  const [isLiked, setIsLiked] = useState(post.is_liked || false);
+  const [showDoubleTapHeart, setShowDoubleTapHeart] = useState(false);
+
+  const likeButtonRef = useRef<LikeButtonRef>(null);
 
   // 캡션이 2줄을 초과하는지 확인 (대략 100자 기준)
   const shouldShowMore = post.caption && post.caption.length > 100;
@@ -47,6 +53,25 @@ export default function PostCard({ post }: PostCardProps) {
       : post.caption;
 
   const relativeTime = formatRelativeTime(post.created_at);
+
+  // 더블탭 좋아요 핸들러
+  const handleDoubleTap = () => {
+    // 이미 좋아요 상태면 아무 동작 안 함
+    if (isLiked) return;
+
+    // 큰 하트 애니메이션 표시
+    setShowDoubleTapHeart(true);
+    setTimeout(() => setShowDoubleTapHeart(false), 1000);
+
+    // LikeButton의 handleLike 호출
+    likeButtonRef.current?.handleLike();
+  };
+
+  // 좋아요 상태 변경 핸들러
+  const handleLikeChange = (newIsLiked: boolean, newLikesCount: number) => {
+    setIsLiked(newIsLiked);
+    setLikesCount(newLikesCount);
+  };
 
   return (
     <article className="bg-white border border-[#dbdbdb] rounded-lg mb-4">
@@ -90,7 +115,10 @@ export default function PostCard({ post }: PostCardProps) {
       </header>
 
       {/* 이미지 영역 (1:1 정사각형) */}
-      <div className="relative w-full aspect-square bg-gray-100">
+      <div
+        className="relative w-full aspect-square bg-gray-100"
+        onDoubleClick={handleDoubleTap}
+      >
         {!imageError ? (
           <Image
             src={post.image_url}
@@ -106,26 +134,34 @@ export default function PostCard({ post }: PostCardProps) {
             <p>이미지를 불러올 수 없습니다</p>
           </div>
         )}
+
+        {/* 더블탭 하트 애니메이션 */}
+        {showDoubleTapHeart && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <Heart
+              className={cn(
+                "w-24 h-24 text-white fill-current drop-shadow-lg",
+                "animate-[scale-fade_1s_ease-out]",
+              )}
+              style={{
+                animation: "scale-fade 1s ease-out forwards",
+              }}
+            />
+          </div>
+        )}
       </div>
 
       {/* 액션 버튼 */}
       <div className="flex items-center justify-between px-4 py-3">
         <div className="flex items-center gap-4">
           {/* 좋아요 버튼 */}
-          <button
-            type="button"
-            className={cn(
-              "transition-colors",
-              post.is_liked ? "text-[#ed4956]" : "text-[#262626]",
-            )}
-            aria-label={post.is_liked ? "좋아요 취소" : "좋아요"}
-            onClick={() => {
-              // 좋아요 기능은 4단계에서 구현 예정
-              console.log("좋아요 버튼 클릭");
-            }}
-          >
-            <Heart className={cn("w-6 h-6", post.is_liked && "fill-current")} />
-          </button>
+          <LikeButton
+            ref={likeButtonRef}
+            postId={post.id}
+            initialIsLiked={isLiked}
+            initialLikesCount={likesCount}
+            onLikeChange={handleLikeChange}
+          />
 
           {/* 댓글 버튼 */}
           <button
@@ -165,9 +201,9 @@ export default function PostCard({ post }: PostCardProps) {
       {/* 컨텐츠 영역 */}
       <div className="px-4 pb-4">
         {/* 좋아요 수 */}
-        {post.likes_count > 0 && (
+        {likesCount > 0 && (
           <p className="font-semibold text-sm text-[#262626] mb-2">
-            좋아요 {post.likes_count.toLocaleString()}개
+            좋아요 {likesCount.toLocaleString()}개
           </p>
         )}
 
