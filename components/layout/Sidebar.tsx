@@ -78,13 +78,13 @@ export default function Sidebar() {
 
   return (
     <aside className="hidden md:flex md:flex-col fixed left-0 top-0 h-screen bg-white border-r border-[#dbdbdb] z-40">
-      {/* Desktop: 244px 너비, Tablet: 72px 너비 */}
-      <div className="w-[72px] md:w-[244px] flex flex-col pt-8 px-4">
+      {/* Desktop (1024px+): 244px 너비, Tablet (768px~1023px): 72px 너비 */}
+      <div className="w-[72px] lg:w-[244px] flex flex-col pt-8 px-4">
         {/* 로고 영역 */}
         <div className="mb-8 px-2">
           <Link href="/" className="text-xl font-bold text-[#262626]">
-            <span className="hidden md:inline">Instagram</span>
-            <span className="md:hidden">IG</span>
+            <span className="hidden lg:inline">Instagram</span>
+            <span className="lg:hidden">IG</span>
           </Link>
         </div>
 
@@ -114,7 +114,7 @@ export default function Sidebar() {
                       active && "text-[#262626]",
                     )}
                   />
-                  <span className="hidden md:inline text-sm">{item.label}</span>
+                  <span className="hidden lg:inline text-sm">{item.label}</span>
                 </button>
               );
             }
@@ -147,8 +147,8 @@ export default function Sidebar() {
           <SignedOut>
             <SignInButton mode="modal">
               <Button className="w-full bg-[#0095f6] hover:bg-[#0095f6]/90">
-                <span className="hidden md:inline">로그인</span>
-                <User className="w-5 h-5 md:hidden" />
+                <span className="hidden lg:inline">로그인</span>
+                <User className="w-5 h-5 lg:hidden" />
               </Button>
             </SignInButton>
           </SignedOut>
@@ -162,7 +162,7 @@ export default function Sidebar() {
                   },
                 }}
               />
-              <span className="hidden md:inline text-sm font-semibold text-[#262626]">
+              <span className="hidden lg:inline text-sm font-semibold text-[#262626]">
                 프로필
               </span>
             </div>

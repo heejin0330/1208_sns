@@ -97,13 +97,14 @@ const LikeButton = forwardRef<LikeButtonRef, LikeButtonProps>(
       <button
         type="button"
         className={cn(
-          "transition-all",
+          "transition-transform",
           isAnimating && "scale-[1.3]",
           isLiked ? "text-[#ed4956]" : "text-[#262626] hover:opacity-70",
         )}
         style={{
           transitionDuration: isAnimating ? "150ms" : "200ms",
           transitionTimingFunction: "ease-out",
+          willChange: isAnimating ? "transform" : "auto",
         }}
         aria-label={isLiked ? "좋아요 취소" : "좋아요"}
         onClick={handleLike}

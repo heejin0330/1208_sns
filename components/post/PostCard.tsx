@@ -293,6 +293,7 @@ export default function PostCard({
               )}
               style={{
                 animation: "scale-fade 1s ease-out forwards",
+                willChange: "transform, opacity",
               }}
             />
           </div>
