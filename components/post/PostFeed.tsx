@@ -25,6 +25,7 @@ interface PostFeedProps {
   initialHasMore: boolean;
   initialOffset: number;
   userId?: string;
+  onPostDelete?: (postId: string) => void;
 }
 
 export default function PostFeed({
@@ -32,6 +33,7 @@ export default function PostFeed({
   initialHasMore,
   initialOffset,
   userId,
+  onPostDelete,
 }: PostFeedProps) {
   const [posts, setPosts] = useState<PostWithUserAndStats[]>(initialPosts);
   const [isLoading, setIsLoading] = useState(false);
@@ -107,14 +109,34 @@ export default function PostFeed({
     };
   }, [hasMore, isLoading, loadMorePosts]);
 
+  // 게시물 삭제 핸들러
+  const handlePostDelete = (postId: string) => {
+    setPosts((prev) => prev.filter((post) => post.id !== postId));
+    // 부모 컴포넌트에도 알림
+    if (onPostDelete) {
+      onPostDelete(postId);
+    }
+  };
+
   return (
     <div className="w-full">
       {/* 게시물 목록 */}
       {posts.length > 0 ? (
         <>
-          {posts.map((post) => (
-            <PostCard key={post.id} post={post} />
-          ))}
+          {posts.map((post, index) => {
+            const previousPost = index > 0 ? posts[index - 1] : null;
+            const nextPost = index < posts.length - 1 ? posts[index + 1] : null;
+
+            return (
+              <PostCard
+                key={post.id}
+                post={post}
+                previousPostId={previousPost?.id || null}
+                nextPostId={nextPost?.id || null}
+                onDelete={handlePostDelete}
+              />
+            );
+          })}
 
           {/* 로딩 상태 */}
           {isLoading && (

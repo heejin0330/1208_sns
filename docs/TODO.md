@@ -185,64 +185,68 @@ _업데이트_
 
 ## 7. 게시물 상세 모달
 
-- [ ] `components/post/PostModal.tsx`
-  - [ ] Desktop: 모달 형식 (이미지 50% + 댓글 50%)
-  - [ ] Mobile: 전체 페이지로 전환
-  - [ ] 닫기 버튼 (✕)
-  - [ ] 이전/다음 게시물 네비게이션 (Desktop)
-- [ ] PostCard 클릭 시 PostModal 열기
-  - [ ] 게시물 상세 정보 로드
-  - [ ] 댓글 전체 목록 표시
+- [x] `components/post/PostModal.tsx`
+  - [x] Desktop: 모달 형식 (이미지 50% + 댓글 50%)
+  - [x] Mobile: 전체 페이지로 전환
+  - [x] 닫기 버튼 (✕)
+  - [x] 이전/다음 게시물 네비게이션 (Desktop)
+- [x] PostCard 클릭 시 PostModal 열기
+  - [x] 게시물 상세 정보 로드
+  - [x] 댓글 전체 목록 표시
 
 ## 8. 프로필 페이지
 
-- [ ] `app/(main)/profile/[userId]/page.tsx`
-  - [ ] 동적 라우트 생성
-  - [ ] ProfileHeader 통합
-  - [ ] PostGrid 통합
-- [ ] `components/profile/ProfileHeader.tsx`
-  - [ ] 프로필 이미지 (150px Desktop / 90px Mobile)
-  - [ ] 사용자명
-  - [ ] 통계 (게시물 수, 팔로워 수, 팔로잉 수)
-  - [ ] "팔로우" / "팔로잉" 버튼 (다른 사람 프로필)
-  - [ ] "프로필 편집" 버튼 (본인 프로필, 1차 제외)
-- [ ] `components/profile/PostGrid.tsx`
-  - [ ] 3열 그리드 레이아웃 (반응형)
-  - [ ] 1:1 정사각형 썸네일
-  - [ ] Hover 시 좋아요/댓글 수 표시
-  - [ ] 클릭 시 게시물 상세 모달 열기
-- [ ] `app/api/users/[userId]/route.ts`
-  - [ ] GET: 사용자 정보 조회
-  - [ ] user_stats 뷰 활용
-- [ ] Sidebar "프로필" 버튼 연결
-  - [ ] `/profile`로 리다이렉트 (본인 프로필)
+- [x] `app/profile/[userId]/page.tsx` (실제 경로: `app/profile/[userId]/page.tsx`, `app/profile/page.tsx`도 생성됨)
+  - [x] 동적 라우트 생성
+  - [x] ProfileHeader 통합
+  - [x] PostGrid 통합
+- [x] `components/profile/ProfileHeader.tsx`
+  - [x] 프로필 이미지 (150px Desktop / 90px Mobile)
+  - [x] 사용자명
+  - [x] 통계 (게시물 수, 팔로워 수, 팔로잉 수)
+  - [x] "팔로우" / "팔로잉" 버튼 (다른 사람 프로필)
+  - [x] "프로필 편집" 버튼 (본인 프로필, 1차 제외)
+- [x] `components/profile/PostGrid.tsx`
+  - [x] 3열 그리드 레이아웃 (반응형)
+  - [x] 1:1 정사각형 썸네일
+  - [x] Hover 시 좋아요/댓글 수 표시
+  - [x] 클릭 시 게시물 상세 모달 열기
+- [x] `app/api/users/[userId]/route.ts`
+  - [x] GET: 사용자 정보 조회
+  - [x] user_stats 뷰 활용
+- [x] Sidebar "프로필" 버튼 연결
+  - [x] `/profile`로 리다이렉트 (본인 프로필)
 
 ## 9. 팔로우 기능
 
-- [ ] `app/api/follows/route.ts`
-  - [ ] POST: 팔로우 추가
-  - [ ] DELETE: 팔로우 제거
-  - [ ] 인증 검증 (Clerk)
-  - [ ] 자기 자신 팔로우 방지
-- [ ] `components/profile/FollowButton.tsx`
-  - [ ] "팔로우" 버튼 (파란색, 미팔로우 상태)
-  - [ ] "팔로잉" 버튼 (회색, 팔로우 중 상태)
-  - [ ] Hover 시 "언팔로우" (빨간 테두리)
-  - [ ] 클릭 시 즉시 API 호출 및 UI 업데이트
-- [ ] ProfileHeader에 FollowButton 통합
-  - [ ] 팔로우 상태 관리
-  - [ ] 통계 실시간 업데이트
+- [x] `app/api/follows/route.ts`
+  - [x] POST: 팔로우 추가
+  - [x] DELETE: 팔로우 제거
+  - [x] 인증 검증 (Clerk)
+  - [x] 자기 자신 팔로우 방지
+- [x] `components/profile/FollowButton.tsx`
+  - [x] "팔로우" 버튼 (파란색, 미팔로우 상태)
+  - [x] "팔로잉" 버튼 (회색, 팔로우 중 상태)
+  - [x] Hover 시 "언팔로우" (빨간 테두리)
+  - [x] 클릭 시 즉시 API 호출 및 UI 업데이트
+- [x] ProfileHeader에 FollowButton 통합
+  - [x] 팔로우 상태 관리
+  - [x] 통계 실시간 업데이트
 
 ## 10. 게시물 삭제
 
-- [ ] `app/api/posts/[postId]/route.ts`
-  - [ ] DELETE: 게시물 삭제
-  - [ ] 본인만 삭제 가능 (인증 검증)
-  - [ ] Supabase Storage에서 이미지 삭제
-- [ ] PostCard ⋯ 메뉴
-  - [ ] 본인 게시물만 삭제 옵션 표시
-  - [ ] 삭제 확인 다이얼로그
-  - [ ] 삭제 후 피드에서 제거
+- [x] `app/api/posts/[postId]/route.ts`
+  - [x] DELETE: 게시물 삭제
+  - [x] 본인만 삭제 가능 (인증 검증)
+  - [x] Supabase Storage에서 이미지 삭제
+- [x] PostCard ⋯ 메뉴
+  - [x] 본인 게시물만 삭제 옵션 표시
+  - [x] 삭제 확인 다이얼로그
+  - [x] 삭제 후 피드에서 제거
+- [x] PostModal ⋯ 메뉴
+  - [x] 본인 게시물만 삭제 옵션 표시
+  - [x] 삭제 확인 다이얼로그
+  - [x] 삭제 후 모달 닫기 및 피드 업데이트
 
 ## 11. 반응형 및 애니메이션
 

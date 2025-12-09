@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import {
   Heart,
@@ -17,6 +18,7 @@ import { formatRelativeTime, cn } from "@/lib/utils";
 import LikeButton, { LikeButtonRef } from "./LikeButton";
 import CommentList from "@/components/comment/CommentList";
 import CommentForm from "@/components/comment/CommentForm";
+import PostModal from "./PostModal";
 
 /**
  * @file PostCard.tsx
@@ -37,9 +39,18 @@ import CommentForm from "@/components/comment/CommentForm";
 
 interface PostCardProps {
   post: PostWithUserAndStats;
+  previousPostId?: string | null;
+  nextPostId?: string | null;
+  onDelete?: (postId: string) => void;
 }
 
-export default function PostCard({ post }: PostCardProps) {
+export default function PostCard({
+  post,
+  previousPostId,
+  nextPostId,
+  onDelete,
+}: PostCardProps) {
+  const router = useRouter();
   const { userId: clerkUserId } = useAuth();
   const [isExpanded, setIsExpanded] = useState(false);
   const [imageError, setImageError] = useState(false);
@@ -48,8 +59,15 @@ export default function PostCard({ post }: PostCardProps) {
   const [showDoubleTapHeart, setShowDoubleTapHeart] = useState(false);
   const [comments, setComments] = useState<CommentWithUser[]>([]);
   const [commentsCount, setCommentsCount] = useState(post.comments_count);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const likeButtonRef = useRef<LikeButtonRef>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // 본인 게시물인지 확인
+  const isOwnPost = post.user.clerk_id === clerkUserId;
 
   // 초기 댓글 로드
   useEffect(() => {
@@ -108,6 +126,84 @@ export default function PostCard({ post }: PostCardProps) {
     setCommentsCount((prev) => Math.max(0, prev - 1));
   };
 
+  // 이미지 클릭 핸들러
+  const handleImageClick = () => {
+    if (window.innerWidth >= 768) {
+      // Desktop: 모달 열기
+      setIsModalOpen(true);
+    } else {
+      // Mobile: 라우트 이동
+      router.push(`/posts/${post.id}`);
+    }
+  };
+
+  // 댓글 모두 보기 핸들러
+  const handleViewAllComments = () => {
+    if (window.innerWidth >= 768) {
+      // Desktop: 모달 열기
+      setIsModalOpen(true);
+    } else {
+      // Mobile: 라우트 이동
+      router.push(`/posts/${post.id}`);
+    }
+  };
+
+  // 메뉴 외부 클릭 시 닫기
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    };
+
+    if (isMenuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isMenuOpen]);
+
+  // 게시물 삭제 핸들러
+  const handleDelete = async () => {
+    if (!isOwnPost) return;
+
+    const confirmed = window.confirm(
+      "정말 이 게시물을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
+    );
+
+    if (!confirmed) return;
+
+    setIsDeleting(true);
+
+    try {
+      const response = await fetch(`/api/posts/${post.id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "게시물 삭제에 실패했습니다.");
+      }
+
+      // 성공 시 부모 컴포넌트에 알림
+      if (onDelete) {
+        onDelete(post.id);
+      }
+    } catch (error) {
+      console.error("Error deleting post:", error);
+      alert(
+        error instanceof Error
+          ? error.message
+          : "게시물 삭제 중 오류가 발생했습니다.",
+      );
+    } finally {
+      setIsDeleting(false);
+      setIsMenuOpen(false);
+    }
+  };
+
   return (
     <article className="bg-white border border-[#dbdbdb] rounded-lg mb-4">
       {/* 헤더 */}
@@ -136,23 +232,40 @@ export default function PostCard({ post }: PostCardProps) {
         </div>
 
         {/* 메뉴 버튼 */}
-        <button
-          type="button"
-          className="text-[#262626] hover:opacity-70 transition-opacity"
-          aria-label="게시물 메뉴"
-          onClick={() => {
-            // 메뉴 기능은 10단계에서 구현 예정
-            console.log("게시물 메뉴 열기");
-          }}
-        >
-          <MoreVertical className="w-6 h-6" />
-        </button>
+        {isOwnPost && (
+          <div className="relative" ref={menuRef}>
+            <button
+              type="button"
+              className="text-[#262626] hover:opacity-70 transition-opacity"
+              aria-label="게시물 메뉴"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              disabled={isDeleting}
+            >
+              <MoreVertical className="w-6 h-6" />
+            </button>
+
+            {/* 드롭다운 메뉴 */}
+            {isMenuOpen && (
+              <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-[#dbdbdb] rounded-lg shadow-lg z-50">
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                  className="w-full px-4 py-3 text-left text-sm text-red-600 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                >
+                  {isDeleting ? "삭제 중..." : "삭제"}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </header>
 
       {/* 이미지 영역 (1:1 정사각형) */}
       <div
-        className="relative w-full aspect-square bg-gray-100"
+        className="relative w-full aspect-square bg-gray-100 cursor-pointer"
         onDoubleClick={handleDoubleTap}
+        onClick={handleImageClick}
       >
         {!imageError ? (
           <Image
@@ -283,10 +396,7 @@ export default function PostCard({ post }: PostCardProps) {
           <button
             type="button"
             className="text-sm text-[#8e8e8e] hover:opacity-70 mb-2"
-            onClick={() => {
-              // 댓글 모달 열기 (7단계에서 구현 예정)
-              console.log("댓글 모두 보기");
-            }}
+            onClick={handleViewAllComments}
           >
             댓글 {commentsCount}개 모두 보기
           </button>
@@ -295,6 +405,23 @@ export default function PostCard({ post }: PostCardProps) {
 
       {/* 댓글 입력 폼 */}
       <CommentForm postId={post.id} onCommentAdded={handleCommentAdded} />
+
+      {/* 게시물 상세 모달 (Desktop) */}
+      <PostModal
+        postId={post.id}
+        open={isModalOpen}
+        onOpenChange={setIsModalOpen}
+        previousPostId={previousPostId}
+        nextPostId={nextPostId}
+        isMobile={false}
+        onDelete={onDelete}
+        initialPost={{
+          ...post,
+          likes_count: likesCount,
+          is_liked: isLiked,
+          comments_count: commentsCount,
+        }}
+      />
     </article>
   );
 }

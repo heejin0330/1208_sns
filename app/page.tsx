@@ -126,10 +126,12 @@ export default async function HomePage() {
   const nextOffset = hasMore ? offset + limit : 0;
 
   return (
-    <PostFeed
-      initialPosts={posts}
-      initialHasMore={hasMore}
-      initialOffset={nextOffset}
-    />
+    <div className="w-full max-w-[630px] mx-auto px-4 py-8">
+      <PostFeed
+        initialPosts={posts}
+        initialHasMore={hasMore}
+        initialOffset={nextOffset}
+      />
+    </div>
   );
 }

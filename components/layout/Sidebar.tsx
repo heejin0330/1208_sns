@@ -69,6 +69,10 @@ export default function Sidebar() {
     if (href === "/") {
       return pathname === "/";
     }
+    if (href === "/profile") {
+      // /profile 또는 /profile/[userId] 모두 활성화
+      return pathname === "/profile" || pathname.startsWith("/profile/");
+    }
     return pathname.startsWith(href);
   };
 
