@@ -1,9 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, Search, Plus, Heart, User } from "lucide-react";
 import { cn } from "@/lib/utils";
+import CreatePostModal from "@/components/post/CreatePostModal";
 
 /**
  * @file BottomNav.tsx
@@ -27,6 +29,7 @@ interface NavItem {
 
 export default function BottomNav() {
   const pathname = usePathname();
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   const navItems: NavItem[] = [
     {
@@ -44,8 +47,7 @@ export default function BottomNav() {
       href: "#",
       label: "만들기",
       onClick: () => {
-        // CreatePostModal은 5단계에서 구현 예정
-        console.log("게시물 만들기 모달 열기");
+        setIsCreateModalOpen(true);
       },
     },
     {
@@ -68,28 +70,54 @@ export default function BottomNav() {
   };
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 h-[50px] bg-white border-t border-[#dbdbdb] z-50 flex items-center justify-around">
-      {navItems.map((item) => {
-        const Icon = item.icon;
-        const active = isActive(item.href);
+    <>
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 h-[50px] bg-white border-t border-[#dbdbdb] z-50 flex items-center justify-around">
+        {navItems.map((item) => {
+          const Icon = item.icon;
+          const active = isActive(item.href);
 
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            onClick={item.onClick}
-            className={cn(
-              "flex items-center justify-center w-full h-full transition-colors",
-              active && "text-[#262626]",
-              !active && "text-[#8e8e8e]",
-            )}
-            aria-label={item.label}
-          >
-            <Icon className="w-6 h-6" />
-          </Link>
-        );
-      })}
-    </nav>
+          // onClick이 있는 항목은 button으로 렌더링
+          if (item.onClick) {
+            return (
+              <button
+                key={item.href}
+                type="button"
+                onClick={item.onClick}
+                className={cn(
+                  "flex items-center justify-center w-full h-full transition-colors",
+                  active && "text-[#262626]",
+                  !active && "text-[#8e8e8e]",
+                )}
+                aria-label={item.label}
+              >
+                <Icon className="w-6 h-6" />
+              </button>
+            );
+          }
+
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                "flex items-center justify-center w-full h-full transition-colors",
+                active && "text-[#262626]",
+                !active && "text-[#8e8e8e]",
+              )}
+              aria-label={item.label}
+            >
+              <Icon className="w-6 h-6" />
+            </Link>
+          );
+        })}
+      </nav>
+
+      {/* 게시물 작성 모달 */}
+      <CreatePostModal
+        open={isCreateModalOpen}
+        onOpenChange={setIsCreateModalOpen}
+      />
+    </>
   );
 }
 

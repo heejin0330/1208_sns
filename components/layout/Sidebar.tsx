@@ -1,10 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useAuth } from "@clerk/nextjs";
+import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
 import { Home, Search, Plus, User } from "lucide-react";
 import { cn } from "@/lib/utils";
+import CreatePostModal from "@/components/post/CreatePostModal";
+import { Button } from "@/components/ui/button";
 
 /**
  * @file Sidebar.tsx
@@ -34,7 +37,7 @@ interface MenuItem {
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const { userId } = useAuth();
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   const menuItems: MenuItem[] = [
     {
@@ -52,8 +55,7 @@ export default function Sidebar() {
       label: "만들기",
       href: "#",
       onClick: () => {
-        // CreatePostModal은 5단계에서 구현 예정
-        console.log("게시물 만들기 모달 열기");
+        setIsCreateModalOpen(true);
       },
     },
     {
@@ -88,11 +90,35 @@ export default function Sidebar() {
             const Icon = item.icon;
             const active = isActive(item.href);
 
+            // onClick이 있는 항목은 button으로 렌더링
+            if (item.onClick) {
+              return (
+                <button
+                  key={item.href}
+                  type="button"
+                  onClick={item.onClick}
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors",
+                    "hover:bg-gray-50",
+                    active && "font-semibold",
+                    "text-[#262626]",
+                  )}
+                >
+                  <Icon
+                    className={cn(
+                      "w-6 h-6 flex-shrink-0",
+                      active && "text-[#262626]",
+                    )}
+                  />
+                  <span className="hidden md:inline text-sm">{item.label}</span>
+                </button>
+              );
+            }
+
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                onClick={item.onClick}
                 className={cn(
                   "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors",
                   "hover:bg-gray-50",
@@ -111,7 +137,40 @@ export default function Sidebar() {
             );
           })}
         </nav>
+
+        {/* 하단 프로필 영역 */}
+        <div className="mt-auto mb-4 px-2">
+          <SignedOut>
+            <SignInButton mode="modal">
+              <Button className="w-full bg-[#0095f6] hover:bg-[#0095f6]/90">
+                <span className="hidden md:inline">로그인</span>
+                <User className="w-5 h-5 md:hidden" />
+              </Button>
+            </SignInButton>
+          </SignedOut>
+
+          <SignedIn>
+            <div className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 rounded-lg transition-colors">
+              <UserButton
+                appearance={{
+                  elements: {
+                    avatarBox: "w-8 h-8",
+                  },
+                }}
+              />
+              <span className="hidden md:inline text-sm font-semibold text-[#262626]">
+                프로필
+              </span>
+            </div>
+          </SignedIn>
+        </div>
       </div>
+
+      {/* 게시물 작성 모달 */}
+      <CreatePostModal
+        open={isCreateModalOpen}
+        onOpenChange={setIsCreateModalOpen}
+      />
     </aside>
   );
 }

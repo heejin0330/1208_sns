@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { Bell, MessageSquare, User } from "lucide-react";
+import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
+import { Bell, MessageSquare } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 /**
  * @file Header.tsx
@@ -25,32 +27,44 @@ export default function Header() {
 
       {/* 우측 아이콘 */}
       <div className="flex items-center gap-4">
-        {/* 알림 아이콘 (1차 제외, UI만) */}
-        <button
-          type="button"
-          className="text-[#262626] hover:opacity-70 transition-opacity"
-          aria-label="알림"
-        >
-          <Bell className="w-6 h-6" />
-        </button>
+        <SignedOut>
+          {/* 로그인하지 않은 경우 */}
+          <SignInButton mode="modal">
+            <Button size="sm" className="bg-[#0095f6] hover:bg-[#0095f6]/90">
+              로그인
+            </Button>
+          </SignInButton>
+        </SignedOut>
 
-        {/* DM 아이콘 (1차 제외, UI만) */}
-        <button
-          type="button"
-          className="text-[#262626] hover:opacity-70 transition-opacity"
-          aria-label="메시지"
-        >
-          <MessageSquare className="w-6 h-6" />
-        </button>
+        <SignedIn>
+          {/* 로그인한 경우 */}
+          {/* 알림 아이콘 (1차 제외, UI만) */}
+          <button
+            type="button"
+            className="text-[#262626] hover:opacity-70 transition-opacity"
+            aria-label="알림"
+          >
+            <Bell className="w-6 h-6" />
+          </button>
 
-        {/* 프로필 아이콘 */}
-        <Link
-          href="/profile"
-          className="text-[#262626] hover:opacity-70 transition-opacity"
-          aria-label="프로필"
-        >
-          <User className="w-6 h-6" />
-        </Link>
+          {/* DM 아이콘 (1차 제외, UI만) */}
+          <button
+            type="button"
+            className="text-[#262626] hover:opacity-70 transition-opacity"
+            aria-label="메시지"
+          >
+            <MessageSquare className="w-6 h-6" />
+          </button>
+
+          {/* Clerk UserButton (프로필, 로그아웃 등) */}
+          <UserButton
+            appearance={{
+              elements: {
+                avatarBox: "w-8 h-8",
+              },
+            }}
+          />
+        </SignedIn>
       </div>
     </header>
   );
