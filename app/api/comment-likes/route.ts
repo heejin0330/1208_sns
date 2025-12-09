@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@/lib/supabase/server";
+import { errorResponse, successResponse, getErrorMessage } from "@/lib/api-utils";
 
 /**
  * @file route.ts
@@ -16,10 +17,7 @@ export async function POST(request: NextRequest) {
     const { userId: clerkUserId } = await auth();
 
     if (!clerkUserId) {
-      return NextResponse.json(
-        { error: "로그인이 필요합니다." },
-        { status: 401 },
-      );
+      return errorResponse("로그인이 필요합니다", 401, "UNAUTHORIZED");
     }
 
     // Supabase 클라이언트 생성
@@ -34,9 +32,10 @@ export async function POST(request: NextRequest) {
 
     if (userError || !currentUser) {
       console.error("Error fetching current user:", userError);
-      return NextResponse.json(
-        { error: "사용자를 찾을 수 없습니다." },
-        { status: 404 },
+      return errorResponse(
+        "데이터베이스에서 사용자를 찾을 수 없습니다",
+        404,
+        "USER_NOT_FOUND",
       );
     }
 
@@ -47,10 +46,7 @@ export async function POST(request: NextRequest) {
     const { comment_id } = body;
 
     if (!comment_id) {
-      return NextResponse.json(
-        { error: "comment_id가 필요합니다." },
-        { status: 400 },
-      );
+      return errorResponse("댓글 ID가 필요합니다", 400, "COMMENT_ID_REQUIRED");
     }
 
     // 댓글 좋아요 추가 (UNIQUE 제약으로 중복 방지)
@@ -63,21 +59,20 @@ export async function POST(request: NextRequest) {
 
     if (insertError) {
       console.error("Error inserting comment like:", insertError);
-      return NextResponse.json(
-        { error: "좋아요 추가에 실패했습니다.", details: insertError.message },
-        { status: 500 },
+      return errorResponse(
+        "댓글 좋아요 추가에 실패했습니다",
+        500,
+        "ADD_COMMENT_LIKE_ERROR",
       );
     }
 
-    return NextResponse.json({ success: true }, { status: 201 });
+    return successResponse({}, 201);
   } catch (error) {
     console.error("Error in POST /api/comment-likes:", error);
-    return NextResponse.json(
-      {
-        error: "서버 내부 오류가 발생했습니다",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 },
+    return errorResponse(
+      getErrorMessage(500),
+      500,
+      "INTERNAL_SERVER_ERROR",
     );
   }
 }
@@ -88,10 +83,7 @@ export async function DELETE(request: NextRequest) {
     const { userId: clerkUserId } = await auth();
 
     if (!clerkUserId) {
-      return NextResponse.json(
-        { error: "로그인이 필요합니다." },
-        { status: 401 },
-      );
+      return errorResponse("로그인이 필요합니다", 401, "UNAUTHORIZED");
     }
 
     // Supabase 클라이언트 생성
@@ -106,9 +98,10 @@ export async function DELETE(request: NextRequest) {
 
     if (userError || !currentUser) {
       console.error("Error fetching current user:", userError);
-      return NextResponse.json(
-        { error: "사용자를 찾을 수 없습니다." },
-        { status: 404 },
+      return errorResponse(
+        "데이터베이스에서 사용자를 찾을 수 없습니다",
+        404,
+        "USER_NOT_FOUND",
       );
     }
 
@@ -119,10 +112,7 @@ export async function DELETE(request: NextRequest) {
     const { comment_id } = body;
 
     if (!comment_id) {
-      return NextResponse.json(
-        { error: "comment_id가 필요합니다." },
-        { status: 400 },
-      );
+      return errorResponse("댓글 ID가 필요합니다", 400, "COMMENT_ID_REQUIRED");
     }
 
     // 댓글 좋아요 제거
@@ -134,21 +124,20 @@ export async function DELETE(request: NextRequest) {
 
     if (deleteError) {
       console.error("Error deleting comment like:", deleteError);
-      return NextResponse.json(
-        { error: "좋아요 제거에 실패했습니다.", details: deleteError.message },
-        { status: 500 },
+      return errorResponse(
+        "댓글 좋아요 제거에 실패했습니다",
+        500,
+        "REMOVE_COMMENT_LIKE_ERROR",
       );
     }
 
-    return NextResponse.json({ success: true }, { status: 200 });
+    return successResponse({}, 200);
   } catch (error) {
     console.error("Error in DELETE /api/comment-likes:", error);
-    return NextResponse.json(
-      {
-        error: "서버 내부 오류가 발생했습니다",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 },
+    return errorResponse(
+      getErrorMessage(500),
+      500,
+      "INTERNAL_SERVER_ERROR",
     );
   }
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, KeyboardEvent } from "react";
+import { useState, KeyboardEvent, useCallback } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { CommentWithUser } from "@/lib/types";
 
@@ -33,7 +33,7 @@ export default function CommentForm({
   const [error, setError] = useState<string | null>(null);
 
   // 댓글 제출
-  const handleSubmit = async () => {
+  const handleSubmit = useCallback(async () => {
     if (!content.trim() || isSubmitting) return;
 
     if (!userId) {
@@ -43,8 +43,6 @@ export default function CommentForm({
 
     setIsSubmitting(true);
     setError(null);
-
-    const previousContent = content;
 
     try {
       const response = await fetch("/api/comments", {
@@ -78,7 +76,7 @@ export default function CommentForm({
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }, [content, isSubmitting, userId, postId, onCommentAdded]);
 
   // Enter 키 처리
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {

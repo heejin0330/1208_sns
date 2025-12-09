@@ -3,7 +3,9 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import PostCard from "./PostCard";
 import PostCardSkeleton from "./PostCardSkeleton";
+import ErrorDisplay from "@/components/ui/ErrorDisplay";
 import { PostWithUserAndStats, PostsResponse } from "@/lib/types";
+import { isNetworkError } from "@/lib/api-utils";
 
 /**
  * @file PostFeed.tsx
@@ -64,7 +66,10 @@ export default function PostFeed({
       const response = await fetch(`/api/posts?${params.toString()}`);
 
       if (!response.ok) {
-        throw new Error("게시물을 불러오는데 실패했습니다");
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage =
+          errorData.error || "게시물을 불러오는데 실패했습니다";
+        throw new Error(errorMessage);
       }
 
       const data: PostsResponse = await response.json();
@@ -74,9 +79,17 @@ export default function PostFeed({
       setOffset(data.next_offset || offset);
     } catch (err) {
       console.error("Error loading posts:", err);
-      setError(
-        err instanceof Error ? err.message : "게시물을 불러오는데 실패했습니다",
-      );
+      let errorMessage = "게시물을 불러오는데 실패했습니다";
+
+      if (err instanceof Error) {
+        if (isNetworkError(err)) {
+          errorMessage = "네트워크 연결을 확인해주세요";
+        } else {
+          errorMessage = err.message;
+        }
+      }
+
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -110,13 +123,16 @@ export default function PostFeed({
   }, [hasMore, isLoading, loadMorePosts]);
 
   // 게시물 삭제 핸들러
-  const handlePostDelete = (postId: string) => {
-    setPosts((prev) => prev.filter((post) => post.id !== postId));
-    // 부모 컴포넌트에도 알림
-    if (onPostDelete) {
-      onPostDelete(postId);
-    }
-  };
+  const handlePostDelete = useCallback(
+    (postId: string) => {
+      setPosts((prev) => prev.filter((post) => post.id !== postId));
+      // 부모 컴포넌트에도 알림
+      if (onPostDelete) {
+        onPostDelete(postId);
+      }
+    },
+    [onPostDelete],
+  );
 
   return (
     <div className="w-full">
@@ -177,19 +193,15 @@ export default function PostFeed({
 
       {/* 에러 메시지 */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-          <p className="text-red-600 text-sm">{error}</p>
-          <button
-            type="button"
-            onClick={() => {
-              setError(null);
-              loadMorePosts();
-            }}
-            className="text-red-600 text-sm font-semibold mt-2 hover:opacity-70"
-          >
-            다시 시도
-          </button>
-        </div>
+        <ErrorDisplay
+          message={error}
+          onRetry={() => {
+            setError(null);
+            loadMorePosts();
+          }}
+          variant="compact"
+          className="mb-4"
+        />
       )}
     </div>
   );

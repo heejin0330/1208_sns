@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, KeyboardEvent, useCallback } from "react";
+import { useState, useEffect, useRef, KeyboardEvent } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -75,7 +75,6 @@ export default function PostModal({
   const [showDoubleTapHeart, setShowDoubleTapHeart] = useState(false);
   const [likesCount, setLikesCount] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
-  const [commentsCount, setCommentsCount] = useState(0);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -151,7 +150,6 @@ export default function PostModal({
       setPost(initialPost);
       setLikesCount(initialPost.likes_count);
       setIsLiked(initialPost.is_liked || false);
-      setCommentsCount(initialPost.comments_count);
       setIsLoading(false);
       setError(null);
     }
@@ -176,7 +174,6 @@ export default function PostModal({
         setPost(data.post);
         setLikesCount(data.post.likes_count);
         setIsLiked(data.post.is_liked || false);
-        setCommentsCount(data.post.comments_count);
         setError(null);
       } catch (err) {
         console.error("Error loading post:", err);
@@ -289,7 +286,7 @@ export default function PostModal({
 
     setShowDoubleTapHeart(true);
     setTimeout(() => setShowDoubleTapHeart(false), 1000);
-    likeButtonRef.current?.triggerLike();
+    likeButtonRef.current?.handleLike();
   };
 
   // 좋아요 상태 변경 핸들러
@@ -301,13 +298,11 @@ export default function PostModal({
   // 댓글 추가 핸들러
   const handleCommentAdded = (newComment: CommentWithUser) => {
     setComments((prev) => [newComment, ...prev]);
-    setCommentsCount((prev) => prev + 1);
   };
 
   // 댓글 삭제 핸들러
   const handleCommentDeleted = (commentId: string) => {
     setComments((prev) => prev.filter((c) => c.id !== commentId));
-    setCommentsCount((prev) => Math.max(0, prev - 1));
   };
 
   // 로딩 상태

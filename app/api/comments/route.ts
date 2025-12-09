@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@/lib/supabase/server";
 import { CommentWithUser } from "@/lib/types";
+import { errorResponse, successResponse, getErrorMessage } from "@/lib/api-utils";
 
 /**
  * @file route.ts
@@ -20,10 +21,7 @@ export async function GET(request: NextRequest) {
     const { userId: clerkUserId } = await auth();
 
     if (!clerkUserId) {
-      return NextResponse.json(
-        { error: "로그인이 필요합니다." },
-        { status: 401 },
-      );
+      return errorResponse("로그인이 필요합니다", 401, "UNAUTHORIZED");
     }
 
     // Supabase 클라이언트 생성
@@ -45,10 +43,7 @@ export async function GET(request: NextRequest) {
     const offset = parseInt(searchParams.get("offset") || "0", 10);
 
     if (!postId) {
-      return NextResponse.json(
-        { error: "postId가 필요합니다." },
-        { status: 400 },
-      );
+      return errorResponse("게시물 ID가 필요합니다", 400, "POST_ID_REQUIRED");
     }
 
     // 댓글 목록 조회 (좋아요 수 포함)
@@ -77,9 +72,10 @@ export async function GET(request: NextRequest) {
 
     if (commentsError) {
       console.error("Error fetching comments:", commentsError);
-      return NextResponse.json(
-        { error: "댓글을 불러오는데 실패했습니다.", details: commentsError.message },
-        { status: 500 },
+      return errorResponse(
+        "댓글을 불러오는데 실패했습니다",
+        500,
+        "FETCH_COMMENTS_ERROR",
       );
     }
 
@@ -120,15 +116,13 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    return NextResponse.json({ comments });
+    return successResponse({ comments });
   } catch (error) {
     console.error("Error in GET /api/comments:", error);
-    return NextResponse.json(
-      {
-        error: "서버 내부 오류가 발생했습니다",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 },
+    return errorResponse(
+      getErrorMessage(500),
+      500,
+      "INTERNAL_SERVER_ERROR",
     );
   }
 }
@@ -139,10 +133,7 @@ export async function POST(request: NextRequest) {
     const { userId: clerkUserId } = await auth();
 
     if (!clerkUserId) {
-      return NextResponse.json(
-        { error: "로그인이 필요합니다." },
-        { status: 401 },
-      );
+      return errorResponse("로그인이 필요합니다", 401, "UNAUTHORIZED");
     }
 
     // Supabase 클라이언트 생성
@@ -157,9 +148,10 @@ export async function POST(request: NextRequest) {
 
     if (userError || !currentUser) {
       console.error("Error fetching current user:", userError);
-      return NextResponse.json(
-        { error: "사용자를 찾을 수 없습니다." },
-        { status: 404 },
+      return errorResponse(
+        "데이터베이스에서 사용자를 찾을 수 없습니다",
+        404,
+        "USER_NOT_FOUND",
       );
     }
 
@@ -170,23 +162,18 @@ export async function POST(request: NextRequest) {
     const { post_id, content } = body;
 
     if (!post_id) {
-      return NextResponse.json(
-        { error: "post_id가 필요합니다." },
-        { status: 400 },
-      );
+      return errorResponse("게시물 ID가 필요합니다", 400, "POST_ID_REQUIRED");
     }
 
     if (!content || typeof content !== "string" || content.trim().length === 0) {
-      return NextResponse.json(
-        { error: "댓글 내용을 입력해주세요." },
-        { status: 400 },
-      );
+      return errorResponse("댓글 내용을 입력해주세요", 400, "CONTENT_REQUIRED");
     }
 
     if (content.length > MAX_COMMENT_LENGTH) {
-      return NextResponse.json(
-        { error: `댓글은 최대 ${MAX_COMMENT_LENGTH}자까지 입력 가능합니다.` },
-        { status: 400 },
+      return errorResponse(
+        `댓글은 최대 ${MAX_COMMENT_LENGTH}자까지 입력 가능합니다`,
+        400,
+        "CONTENT_TOO_LONG",
       );
     }
 
@@ -218,13 +205,27 @@ export async function POST(request: NextRequest) {
 
     if (insertError) {
       console.error("Error inserting comment:", insertError);
-      return NextResponse.json(
-        { error: "댓글 작성에 실패했습니다.", details: insertError.message },
-        { status: 500 },
+      return errorResponse(
+        "댓글 작성에 실패했습니다",
+        500,
+        "CREATE_COMMENT_ERROR",
       );
     }
 
     // CommentWithUser 타입으로 변환 (새 댓글이므로 좋아요 수는 0)
+    // users는 join 결과이므로 배열이 아닌 단일 객체로 처리
+    const userData = Array.isArray(commentData.users)
+      ? commentData.users[0]
+      : commentData.users;
+
+    if (!userData) {
+      return errorResponse(
+        "사용자 정보를 찾을 수 없습니다",
+        404,
+        "USER_NOT_FOUND",
+      );
+    }
+
     const comment: CommentWithUser = {
       id: commentData.id,
       post_id: commentData.post_id,
@@ -233,24 +234,22 @@ export async function POST(request: NextRequest) {
       created_at: commentData.created_at,
       updated_at: commentData.updated_at,
       user: {
-        id: commentData.users.id,
-        clerk_id: commentData.users.clerk_id,
-        name: commentData.users.name,
-        created_at: commentData.users.created_at,
+        id: userData.id,
+        clerk_id: userData.clerk_id,
+        name: userData.name,
+        created_at: userData.created_at,
       },
       likes_count: 0,
       is_liked: false,
     };
 
-    return NextResponse.json({ comment }, { status: 201 });
+    return successResponse({ comment }, 201);
   } catch (error) {
     console.error("Error in POST /api/comments:", error);
-    return NextResponse.json(
-      {
-        error: "서버 내부 오류가 발생했습니다",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 },
+    return errorResponse(
+      getErrorMessage(500),
+      500,
+      "INTERNAL_SERVER_ERROR",
     );
   }
 }
@@ -261,10 +260,7 @@ export async function DELETE(request: NextRequest) {
     const { userId: clerkUserId } = await auth();
 
     if (!clerkUserId) {
-      return NextResponse.json(
-        { error: "로그인이 필요합니다." },
-        { status: 401 },
-      );
+      return errorResponse("로그인이 필요합니다", 401, "UNAUTHORIZED");
     }
 
     // Supabase 클라이언트 생성
@@ -279,9 +275,10 @@ export async function DELETE(request: NextRequest) {
 
     if (userError || !currentUser) {
       console.error("Error fetching current user:", userError);
-      return NextResponse.json(
-        { error: "사용자를 찾을 수 없습니다." },
-        { status: 404 },
+      return errorResponse(
+        "데이터베이스에서 사용자를 찾을 수 없습니다",
+        404,
+        "USER_NOT_FOUND",
       );
     }
 
@@ -292,10 +289,7 @@ export async function DELETE(request: NextRequest) {
     const { comment_id } = body;
 
     if (!comment_id) {
-      return NextResponse.json(
-        { error: "comment_id가 필요합니다." },
-        { status: 400 },
-      );
+      return errorResponse("댓글 ID가 필요합니다", 400, "COMMENT_ID_REQUIRED");
     }
 
     // 본인 댓글인지 확인
@@ -306,17 +300,11 @@ export async function DELETE(request: NextRequest) {
       .single();
 
     if (fetchError || !comment) {
-      return NextResponse.json(
-        { error: "댓글을 찾을 수 없습니다." },
-        { status: 404 },
-      );
+      return errorResponse("댓글을 찾을 수 없습니다", 404, "COMMENT_NOT_FOUND");
     }
 
     if (comment.user_id !== currentUserId) {
-      return NextResponse.json(
-        { error: "본인의 댓글만 삭제할 수 있습니다." },
-        { status: 403 },
-      );
+      return errorResponse("본인의 댓글만 삭제할 수 있습니다", 403, "FORBIDDEN");
     }
 
     // 댓글 삭제
@@ -327,21 +315,20 @@ export async function DELETE(request: NextRequest) {
 
     if (deleteError) {
       console.error("Error deleting comment:", deleteError);
-      return NextResponse.json(
-        { error: "댓글 삭제에 실패했습니다.", details: deleteError.message },
-        { status: 500 },
+      return errorResponse(
+        "댓글 삭제에 실패했습니다",
+        500,
+        "DELETE_COMMENT_ERROR",
       );
     }
 
-    return NextResponse.json({ success: true }, { status: 200 });
+    return successResponse({}, 200);
   } catch (error) {
     console.error("Error in DELETE /api/comments:", error);
-    return NextResponse.json(
-      {
-        error: "서버 내부 오류가 발생했습니다",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 },
+    return errorResponse(
+      getErrorMessage(500),
+      500,
+      "INTERNAL_SERVER_ERROR",
     );
   }
 }

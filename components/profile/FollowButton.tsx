@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, memo } from "react";
 import { cn } from "@/lib/utils";
 
 /**
@@ -20,7 +20,7 @@ interface FollowButtonProps {
   onToggle?: (newState: boolean) => void;
 }
 
-export default function FollowButton({
+const FollowButton = memo(function FollowButton({
   userId,
   isFollowing: initialIsFollowing,
   onToggle,
@@ -106,5 +106,8 @@ export default function FollowButton({
           : "팔로우"}
     </button>
   );
-}
+});
 
+FollowButton.displayName = "FollowButton";
+
+export default FollowButton;

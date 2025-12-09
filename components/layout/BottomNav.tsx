@@ -87,8 +87,15 @@ export default function BottomNav() {
                 key={item.href}
                 type="button"
                 onClick={item.onClick}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    item.onClick?.();
+                  }
+                }}
                 className={cn(
                   "flex items-center justify-center w-full h-full transition-colors",
+                  "focus:outline-none focus:ring-2 focus:ring-[#0095f6] focus:ring-offset-2",
                   active && "text-[#262626]",
                   !active && "text-[#8e8e8e]",
                 )}
@@ -105,6 +112,7 @@ export default function BottomNav() {
               href={item.href}
               className={cn(
                 "flex items-center justify-center w-full h-full transition-colors",
+                "focus:outline-none focus:ring-2 focus:ring-[#0095f6] focus:ring-offset-2",
                 active && "text-[#262626]",
                 !active && "text-[#8e8e8e]",
               )}

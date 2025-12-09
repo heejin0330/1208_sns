@@ -1,10 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { User } from "lucide-react";
 import { User as UserType, UserStats } from "@/lib/types";
-import { cn } from "@/lib/utils";
 import FollowButton from "@/components/profile/FollowButton";
 
 /**

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Trash2, User, Heart } from "lucide-react";
+import { Trash2, User } from "lucide-react";
 import { CommentWithUser } from "@/lib/types";
 import { formatRelativeTime, cn } from "@/lib/utils";
 
@@ -33,13 +33,13 @@ interface CommentListProps {
 }
 
 export default function CommentList({
-  postId,
+  postId: _postId,
   initialComments,
   maxDisplay = 2,
   showAll = false,
   currentClerkUserId,
   onCommentDeleted,
-  onCommentAdded,
+  onCommentAdded: _onCommentAdded,
 }: CommentListProps) {
   const [comments, setComments] = useState<CommentWithUser[]>(
     initialComments.sort((a, b) =>
@@ -231,6 +231,7 @@ export default function CommentList({
                       : "text-[#8e8e8e] hover:text-[#262626]",
                     likingComments.has(comment.id) && "opacity-50 cursor-not-allowed",
                   )}
+                  aria-label={comment.is_liked ? "댓글 좋아요 취소" : "댓글 좋아요"}
                 >
                   좋아요
                 </button>

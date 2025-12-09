@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@/lib/supabase/server";
 import { UserResponse } from "@/lib/types";
+import { errorResponse, successResponse, getErrorMessage } from "@/lib/api-utils";
 
 /**
  * @file route.ts
@@ -22,10 +23,7 @@ export async function GET(
     const { userId: clerkUserId } = await auth();
 
     if (!clerkUserId) {
-      return NextResponse.json(
-        { error: "로그인이 필요합니다." },
-        { status: 401 },
-      );
+      return errorResponse("로그인이 필요합니다", 401, "UNAUTHORIZED");
     }
 
     // Supabase 클라이언트 생성
@@ -44,10 +42,7 @@ export async function GET(
     const { userId } = await params;
 
     if (!userId) {
-      return NextResponse.json(
-        { error: "userId가 필요합니다." },
-        { status: 400 },
-      );
+      return errorResponse("사용자 ID가 필요합니다", 400, "USER_ID_REQUIRED");
     }
 
     // user_stats 뷰에서 사용자 정보 및 통계 조회
@@ -59,10 +54,7 @@ export async function GET(
 
     if (statsError || !userStats) {
       console.error("Error fetching user stats:", statsError);
-      return NextResponse.json(
-        { error: "사용자를 찾을 수 없습니다." },
-        { status: 404 },
-      );
+      return errorResponse("사용자를 찾을 수 없습니다", 404, "USER_NOT_FOUND");
     }
 
     // User 타입으로 변환
@@ -102,15 +94,13 @@ export async function GET(
       is_following: isFollowing,
     };
 
-    return NextResponse.json(response);
+    return successResponse(response);
   } catch (error) {
     console.error("Error in GET /api/users/[userId]:", error);
-    return NextResponse.json(
-      {
-        error: "서버 내부 오류가 발생했습니다",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 },
+    return errorResponse(
+      getErrorMessage(500),
+      500,
+      "INTERNAL_SERVER_ERROR",
     );
   }
 }

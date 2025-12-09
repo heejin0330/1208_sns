@@ -101,12 +101,19 @@ export default function Sidebar() {
                   key={item.href}
                   type="button"
                   onClick={item.onClick}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      item.onClick?.();
+                    }
+                  }}
                   className={cn(
                     "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors",
-                    "hover:bg-gray-50",
+                    "hover:bg-gray-50 focus:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#0095f6] focus:ring-offset-2",
                     active && "font-semibold",
                     "text-[#262626]",
                   )}
+                  aria-label={item.label}
                 >
                   <Icon
                     className={cn(
@@ -125,10 +132,11 @@ export default function Sidebar() {
                 href={item.href}
                 className={cn(
                   "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors",
-                  "hover:bg-gray-50",
+                  "hover:bg-gray-50 focus:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#0095f6] focus:ring-offset-2",
                   active && "font-semibold",
                   "text-[#262626]",
                 )}
+                aria-label={item.label}
               >
                 <Icon
                   className={cn(

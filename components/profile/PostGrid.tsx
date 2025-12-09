@@ -33,7 +33,7 @@ export default function PostGrid({ posts }: PostGridProps) {
   const [hoveredPostId, setHoveredPostId] = useState<string | null>(null);
 
   // 게시물 클릭 핸들러
-  const handlePostClick = (postId: string, index: number) => {
+  const handlePostClick = (postId: string, _index: number) => {
     if (window.innerWidth >= 768) {
       // Desktop: 모달 열기
       setSelectedPostId(postId);
@@ -95,6 +95,15 @@ export default function PostGrid({ posts }: PostGridProps) {
             onClick={() => handlePostClick(post.id, index)}
             onMouseEnter={() => setHoveredPostId(post.id)}
             onMouseLeave={() => setHoveredPostId(null)}
+            role="button"
+            tabIndex={0}
+            aria-label={`${post.user.name}의 게시물 보기`}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                handlePostClick(post.id, index);
+              }
+            }}
           >
             <Image
               src={post.image_url}
@@ -102,7 +111,7 @@ export default function PostGrid({ posts }: PostGridProps) {
               fill
               className="object-cover"
               sizes="(max-width: 768px) 33vw, (max-width: 1024px) 50vw, 33vw"
-              priority={index < 6}
+              {...(index < 6 ? { priority: true } : { loading: "lazy" })}
             />
 
             {/* Hover 오버레이 (Desktop만) */}

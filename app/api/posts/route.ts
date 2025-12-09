@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@/lib/supabase/server";
 import { PostsResponse, PostWithUserAndStats } from "@/lib/types";
+import {
+  errorResponse,
+  successResponse,
+  getErrorMessage,
+} from "@/lib/api-utils";
 
 /**
  * @file route.ts
@@ -31,7 +36,7 @@ export async function GET(request: NextRequest) {
     const { userId: clerkUserId } = await auth();
 
     if (!clerkUserId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return errorResponse("로그인이 필요합니다", 401, "UNAUTHORIZED");
     }
 
     // Supabase 클라이언트 생성
@@ -46,9 +51,10 @@ export async function GET(request: NextRequest) {
 
     if (userError || !currentUser) {
       console.error("Error fetching current user:", userError);
-      return NextResponse.json(
-        { error: "User not found in database" },
-        { status: 404 },
+      return errorResponse(
+        "데이터베이스에서 사용자를 찾을 수 없습니다",
+        404,
+        "USER_NOT_FOUND",
       );
     }
 
@@ -94,9 +100,10 @@ export async function GET(request: NextRequest) {
 
     if (postsError) {
       console.error("Error fetching posts:", postsError);
-      return NextResponse.json(
-        { error: "Failed to fetch posts", details: postsError.message },
-        { status: 500 },
+      return errorResponse(
+        "게시물을 불러오는데 실패했습니다",
+        500,
+        "FETCH_POSTS_ERROR",
       );
     }
 
@@ -153,38 +160,27 @@ export async function GET(request: NextRequest) {
       next_offset: nextOffset,
     };
 
-    return NextResponse.json(response);
+    return successResponse(response);
   } catch (error) {
     console.error("Error in GET /api/posts:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return errorResponse(getErrorMessage(500), 500, "INTERNAL_SERVER_ERROR");
   }
 }
 
 export async function POST(request: NextRequest) {
-  console.log("=== POST /api/posts 시작 ===");
-
   try {
     // Clerk 인증 확인
     const { userId: clerkUserId } = await auth();
 
-    console.log("Clerk User ID:", clerkUserId);
-
     if (!clerkUserId) {
       console.error("인증 실패: Clerk user ID가 없습니다");
-      return NextResponse.json(
-        { error: "로그인이 필요합니다. 다시 로그인해주세요." },
-        { status: 401 },
-      );
+      return errorResponse("로그인이 필요합니다", 401, "UNAUTHORIZED");
     }
 
     // Supabase 클라이언트 생성
     const supabase = await createClient();
 
     // 현재 사용자의 Supabase user_id 가져오기
-    console.log("Supabase에서 사용자 조회 중...");
     const { data: currentUser, error: userError } = await supabase
       .from("users")
       .select("id")
@@ -193,17 +189,14 @@ export async function POST(request: NextRequest) {
 
     if (userError || !currentUser) {
       console.error("Supabase 사용자 조회 실패:", userError);
-      return NextResponse.json(
-        {
-          error:
-            "데이터베이스에서 사용자를 찾을 수 없습니다. 페이지를 새로고침해주세요.",
-        },
-        { status: 404 },
+      return errorResponse(
+        "데이터베이스에서 사용자를 찾을 수 없습니다",
+        404,
+        "USER_NOT_FOUND",
       );
     }
 
     const currentUserId = currentUser.id;
-    console.log("Supabase User ID:", currentUserId);
 
     // FormData 파싱
     const formData = await request.formData();
@@ -211,7 +204,7 @@ export async function POST(request: NextRequest) {
     const caption = formData.get("caption") as string;
 
     if (!image) {
-      return NextResponse.json({ error: "Image is required" }, { status: 400 });
+      return errorResponse("이미지가 필요합니다", 400, "IMAGE_REQUIRED");
     }
 
     // 파일 검증
@@ -219,21 +212,22 @@ export async function POST(request: NextRequest) {
     const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
     if (!ALLOWED_TYPES.includes(image.type)) {
-      return NextResponse.json(
-        { error: "Only JPEG, PNG, and WEBP images are allowed" },
-        { status: 400 },
+      return errorResponse(
+        "JPEG, PNG, WEBP 형식의 이미지만 업로드 가능합니다",
+        400,
+        "INVALID_IMAGE_TYPE",
       );
     }
 
     if (image.size > MAX_FILE_SIZE) {
-      return NextResponse.json(
-        { error: "File size must be less than 5MB" },
-        { status: 400 },
+      return errorResponse(
+        "파일 크기는 5MB 이하여야 합니다",
+        400,
+        "FILE_TOO_LARGE",
       );
     }
 
     // 파일을 ArrayBuffer로 변환
-    console.log("파일 변환 중...");
     const arrayBuffer = await image.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
@@ -245,8 +239,6 @@ export async function POST(request: NextRequest) {
       .substring(7)}.${fileExt}`;
     const filePath = `${clerkUserId}/${fileName}`;
 
-    console.log("Storage 업로드 경로:", filePath);
-
     // Supabase Storage에 업로드
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from("posts")
@@ -255,14 +247,9 @@ export async function POST(request: NextRequest) {
         upsert: false,
       });
 
-    console.log("Storage 업로드 결과:", uploadData, uploadError);
-
     if (uploadError) {
       console.error("Error uploading to storage:", uploadError);
-      return NextResponse.json(
-        { error: "Failed to upload image", details: uploadError.message },
-        { status: 500 },
-      );
+      return errorResponse("이미지 업로드에 실패했습니다", 500, "UPLOAD_ERROR");
     }
 
     // 공개 URL 생성
@@ -270,10 +257,7 @@ export async function POST(request: NextRequest) {
       data: { publicUrl },
     } = supabase.storage.from("posts").getPublicUrl(uploadData.path);
 
-    console.log("공개 URL:", publicUrl);
-
     // posts 테이블에 데이터 저장
-    console.log("posts 테이블에 저장 중...");
     const { data: postData, error: postError } = await supabase
       .from("posts")
       .insert({
@@ -284,23 +268,18 @@ export async function POST(request: NextRequest) {
       .select()
       .single();
 
-    console.log("posts 저장 결과:", postData, postError);
-
     if (postError) {
       console.error("Error creating post:", postError);
       // 업로드된 이미지 삭제 (롤백)
       await supabase.storage.from("posts").remove([uploadData.path]);
-      return NextResponse.json(
-        { error: "Failed to create post", details: postError.message },
-        { status: 500 },
+      return errorResponse(
+        "게시물 생성에 실패했습니다",
+        500,
+        "CREATE_POST_ERROR",
       );
     }
 
-    console.log("=== 게시물 생성 성공 ===");
-    return NextResponse.json(
-      { success: true, post: postData },
-      { status: 201 },
-    );
+    return successResponse({ post: postData }, 201);
   } catch (error) {
     console.error("=== POST /api/posts 오류 ===");
     console.error("Error details:", error);
@@ -313,12 +292,6 @@ export async function POST(request: NextRequest) {
       error instanceof Error ? error.stack : "No stack trace",
     );
 
-    return NextResponse.json(
-      {
-        error: "서버 내부 오류가 발생했습니다",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 },
-    );
+    return errorResponse(getErrorMessage(500), 500, "INTERNAL_SERVER_ERROR");
   }
 }

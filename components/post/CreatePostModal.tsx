@@ -77,12 +77,8 @@ export default function CreatePostModal({
         fileType: file.type, // 원본 파일 타입 유지
       };
 
-      console.log(`원본 이미지 크기: ${(file.size / 1024 / 1024).toFixed(2)}MB`);
-
       // 이미지 압축
       const compressedFile = await imageCompression(file, options);
-
-      console.log(`압축 후 크기: ${(compressedFile.size / 1024 / 1024).toFixed(2)}MB`);
 
       // 압축 후에도 5MB를 초과하면 에러
       if (compressedFile.size > MAX_FILE_SIZE) {
@@ -141,15 +137,10 @@ export default function CreatePostModal({
       formData.append("image", selectedFile);
       formData.append("caption", caption);
 
-      console.log("업로드 시작...");
-      
       const response = await fetch("/api/posts", {
         method: "POST",
         body: formData,
       });
-
-      console.log("Response status:", response.status);
-      console.log("Response ok:", response.ok);
 
       if (!response.ok) {
         // 응답 텍스트 먼저 확인
@@ -214,6 +205,7 @@ export default function CreatePostModal({
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
                         className="bg-[#0095f6] hover:bg-[#0095f6]/90"
+                        aria-label="이미지 파일 선택"
                       >
                         <Upload className="w-4 h-4 mr-2" />
                         컴퓨터에서 선택
@@ -232,6 +224,7 @@ export default function CreatePostModal({
                 className="hidden"
                 onChange={handleFileSelect}
                 disabled={isProcessing}
+                aria-label="이미지 파일 선택"
               />
             </div>
           ) : (
@@ -262,6 +255,7 @@ export default function CreatePostModal({
                   onChange={(e) => setCaption(e.target.value.slice(0, MAX_CAPTION_LENGTH))}
                   className="min-h-[100px] resize-none text-gray-900"
                   disabled={isUploading}
+                  aria-label="게시물 캡션 입력"
                 />
                 <div className="flex justify-between items-center text-sm text-gray-500">
                   <span>
@@ -286,6 +280,7 @@ export default function CreatePostModal({
               variant="outline"
               onClick={handleClose}
               disabled={isUploading || isProcessing}
+              aria-label="게시물 작성 취소"
             >
               취소
             </Button>
@@ -294,6 +289,7 @@ export default function CreatePostModal({
               onClick={handleUpload}
               disabled={!selectedFile || isUploading || isProcessing}
               className="bg-[#0095f6] hover:bg-[#0095f6]/90"
+              aria-label={isUploading ? "게시물 업로드 중" : "게시물 공유"}
             >
               {isUploading ? (
                 <>

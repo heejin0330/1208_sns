@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, memo, useMemo, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -44,7 +44,7 @@ interface PostCardProps {
   onDelete?: (postId: string) => void;
 }
 
-export default function PostCard({
+const PostCard = memo(function PostCard({
   post,
   previousPostId,
   nextPostId,
@@ -87,16 +87,25 @@ export default function PostCard({
   }, [post.id]);
 
   // 캡션이 2줄을 초과하는지 확인 (대략 100자 기준)
-  const shouldShowMore = post.caption && post.caption.length > 100;
-  const displayCaption =
-    !isExpanded && shouldShowMore
-      ? post.caption?.slice(0, 100) + "..."
-      : post.caption;
+  const shouldShowMore = useMemo(
+    () => post.caption && post.caption.length > 100,
+    [post.caption],
+  );
+  const displayCaption = useMemo(
+    () =>
+      !isExpanded && shouldShowMore
+        ? post.caption?.slice(0, 100) + "..."
+        : post.caption,
+    [isExpanded, shouldShowMore, post.caption],
+  );
 
-  const relativeTime = formatRelativeTime(post.created_at);
+  const relativeTime = useMemo(
+    () => formatRelativeTime(post.created_at),
+    [post.created_at],
+  );
 
   // 더블탭 좋아요 핸들러
-  const handleDoubleTap = () => {
+  const handleDoubleTap = useCallback(() => {
     // 이미 좋아요 상태면 아무 동작 안 함
     if (isLiked) return;
 
@@ -106,25 +115,28 @@ export default function PostCard({
 
     // LikeButton의 handleLike 호출
     likeButtonRef.current?.handleLike();
-  };
+  }, [isLiked]);
 
   // 좋아요 상태 변경 핸들러
-  const handleLikeChange = (newIsLiked: boolean, newLikesCount: number) => {
-    setIsLiked(newIsLiked);
-    setLikesCount(newLikesCount);
-  };
+  const handleLikeChange = useCallback(
+    (newIsLiked: boolean, newLikesCount: number) => {
+      setIsLiked(newIsLiked);
+      setLikesCount(newLikesCount);
+    },
+    [],
+  );
 
   // 댓글 추가 핸들러
-  const handleCommentAdded = (newComment: CommentWithUser) => {
+  const handleCommentAdded = useCallback((newComment: CommentWithUser) => {
     setComments((prev) => [newComment, ...prev]);
     setCommentsCount((prev) => prev + 1);
-  };
+  }, []);
 
   // 댓글 삭제 핸들러
-  const handleCommentDeleted = (commentId: string) => {
+  const handleCommentDeleted = useCallback((commentId: string) => {
     setComments((prev) => prev.filter((c) => c.id !== commentId));
     setCommentsCount((prev) => Math.max(0, prev - 1));
-  };
+  }, []);
 
   // 이미지 클릭 핸들러
   const handleImageClick = () => {
@@ -236,7 +248,7 @@ export default function PostCard({
           <div className="relative" ref={menuRef}>
             <button
               type="button"
-              className="text-[#262626] hover:opacity-70 transition-opacity"
+              className="text-[#262626] hover:opacity-70 transition-opacity focus:outline-none focus:ring-2 focus:ring-[#0095f6] focus:ring-offset-2 rounded disabled:opacity-50"
               aria-label="게시물 메뉴"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               disabled={isDeleting}
@@ -251,7 +263,8 @@ export default function PostCard({
                   type="button"
                   onClick={handleDelete}
                   disabled={isDeleting}
-                  className="w-full px-4 py-3 text-left text-sm text-red-600 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                  className="w-full px-4 py-3 text-left text-sm text-red-600 hover:bg-gray-50 transition-colors disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2"
+                  aria-label="게시물 삭제"
                 >
                   {isDeleting ? "삭제 중..." : "삭제"}
                 </button>
@@ -263,9 +276,18 @@ export default function PostCard({
 
       {/* 이미지 영역 (1:1 정사각형) */}
       <div
-        className="relative w-full aspect-square bg-gray-100 cursor-pointer"
+        className="relative w-full aspect-square bg-gray-100 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#0095f6] focus:ring-offset-2"
         onDoubleClick={handleDoubleTap}
         onClick={handleImageClick}
+        role="button"
+        tabIndex={0}
+        aria-label="게시물 상세 보기"
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            handleImageClick();
+          }
+        }}
       >
         {!imageError ? (
           <Image
@@ -274,7 +296,7 @@ export default function PostCard({
             fill
             className="object-cover"
             sizes="(max-width: 768px) 100vw, 630px"
-            priority={false}
+            loading="lazy"
             onError={() => setImageError(true)}
           />
         ) : (
@@ -315,12 +337,9 @@ export default function PostCard({
           {/* 댓글 버튼 */}
           <button
             type="button"
-            className="text-[#262626] hover:opacity-70 transition-opacity"
+            className="text-[#262626] hover:opacity-70 transition-opacity focus:outline-none focus:ring-2 focus:ring-[#0095f6] focus:ring-offset-2 rounded"
             aria-label="댓글 달기"
-            onClick={() => {
-              // 댓글 기능은 6단계에서 구현 예정
-              console.log("댓글 버튼 클릭");
-            }}
+            onClick={handleImageClick}
           >
             <MessageSquare className="w-6 h-6" />
           </button>
@@ -328,7 +347,7 @@ export default function PostCard({
           {/* 공유 버튼 (1차 제외, UI만) */}
           <button
             type="button"
-            className="text-[#262626] hover:opacity-70 transition-opacity"
+            className="text-[#262626] hover:opacity-70 transition-opacity focus:outline-none focus:ring-2 focus:ring-[#0095f6] focus:ring-offset-2 rounded disabled:opacity-50"
             aria-label="공유"
             disabled
           >
@@ -339,7 +358,7 @@ export default function PostCard({
         {/* 북마크 버튼 (1차 제외, UI만) */}
         <button
           type="button"
-          className="text-[#262626] hover:opacity-70 transition-opacity"
+          className="text-[#262626] hover:opacity-70 transition-opacity focus:outline-none focus:ring-2 focus:ring-[#0095f6] focus:ring-offset-2 rounded disabled:opacity-50"
           aria-label="북마크"
           disabled
         >
@@ -425,4 +444,8 @@ export default function PostCard({
       />
     </article>
   );
-}
+});
+
+PostCard.displayName = "PostCard";
+
+export default PostCard;

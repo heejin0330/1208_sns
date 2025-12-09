@@ -3,6 +3,7 @@ import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@/lib/supabase/server";
 import { getServiceRoleClient } from "@/lib/supabase/service-role";
 import { PostWithUserAndStats } from "@/lib/types";
+import { errorResponse, successResponse, getErrorMessage } from "@/lib/api-utils";
 
 /**
  * @file route.ts
@@ -23,10 +24,7 @@ export async function GET(
     const { userId: clerkUserId } = await auth();
 
     if (!clerkUserId) {
-      return NextResponse.json(
-        { error: "로그인이 필요합니다." },
-        { status: 401 },
-      );
+      return errorResponse("로그인이 필요합니다", 401, "UNAUTHORIZED");
     }
 
     // Supabase 클라이언트 생성
@@ -41,9 +39,10 @@ export async function GET(
 
     if (userError || !currentUser) {
       console.error("Error fetching current user:", userError);
-      return NextResponse.json(
-        { error: "사용자를 찾을 수 없습니다." },
-        { status: 404 },
+      return errorResponse(
+        "데이터베이스에서 사용자를 찾을 수 없습니다",
+        404,
+        "USER_NOT_FOUND",
       );
     }
 
@@ -104,6 +103,19 @@ export async function GET(
     const commentsCount = postData.comments?.length || 0;
     const isLiked = !!userLike;
 
+    // users는 join 결과이므로 배열이 아닌 단일 객체로 처리
+    const userData = Array.isArray(postData.users)
+      ? postData.users[0]
+      : (postData.users as { id: string; clerk_id: string; name: string; created_at: string } | null);
+
+    if (!userData) {
+      return errorResponse(
+        "사용자 정보를 찾을 수 없습니다",
+        404,
+        "USER_NOT_FOUND",
+      );
+    }
+
     const post: PostWithUserAndStats = {
       id: postData.id,
       user_id: postData.user_id,
@@ -112,25 +124,23 @@ export async function GET(
       created_at: postData.created_at,
       updated_at: postData.updated_at,
       user: {
-        id: postData.users.id,
-        clerk_id: postData.users.clerk_id,
-        name: postData.users.name,
-        created_at: postData.users.created_at,
+        id: userData.id,
+        clerk_id: userData.clerk_id,
+        name: userData.name,
+        created_at: userData.created_at,
       },
       likes_count: likesCount,
       comments_count: commentsCount,
       is_liked: isLiked,
     };
 
-    return NextResponse.json({ post });
+    return successResponse({ post });
   } catch (error) {
     console.error("Error in GET /api/posts/[postId]:", error);
-    return NextResponse.json(
-      {
-        error: "서버 내부 오류가 발생했습니다",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 },
+    return errorResponse(
+      getErrorMessage(500),
+      500,
+      "INTERNAL_SERVER_ERROR",
     );
   }
 }
@@ -157,10 +167,7 @@ export async function DELETE(
     const { userId: clerkUserId } = await auth();
 
     if (!clerkUserId) {
-      return NextResponse.json(
-        { error: "로그인이 필요합니다." },
-        { status: 401 },
-      );
+      return errorResponse("로그인이 필요합니다", 401, "UNAUTHORIZED");
     }
 
     // Supabase 클라이언트 생성
@@ -175,9 +182,10 @@ export async function DELETE(
 
     if (userError || !currentUser) {
       console.error("Error fetching current user:", userError);
-      return NextResponse.json(
-        { error: "사용자를 찾을 수 없습니다." },
-        { status: 404 },
+      return errorResponse(
+        "데이터베이스에서 사용자를 찾을 수 없습니다",
+        404,
+        "USER_NOT_FOUND",
       );
     }
 
@@ -187,10 +195,7 @@ export async function DELETE(
     const { postId } = await params;
 
     if (!postId) {
-      return NextResponse.json(
-        { error: "postId가 필요합니다." },
-        { status: 400 },
-      );
+      return errorResponse("게시물 ID가 필요합니다", 400, "POST_ID_REQUIRED");
     }
 
     // 게시물 조회 및 소유자 확인
@@ -202,18 +207,12 @@ export async function DELETE(
 
     if (postError || !postData) {
       console.error("Error fetching post:", postError);
-      return NextResponse.json(
-        { error: "게시물을 찾을 수 없습니다." },
-        { status: 404 },
-      );
+      return errorResponse("게시물을 찾을 수 없습니다", 404, "POST_NOT_FOUND");
     }
 
     // 본인 게시물인지 확인
     if (postData.user_id !== currentUserId) {
-      return NextResponse.json(
-        { error: "이 게시물을 삭제할 권한이 없습니다." },
-        { status: 403 },
-      );
+      return errorResponse("이 게시물을 삭제할 권한이 없습니다", 403, "FORBIDDEN");
     }
 
     // Supabase Storage에서 이미지 삭제
@@ -240,24 +239,20 @@ export async function DELETE(
 
     if (deleteError) {
       console.error("Error deleting post:", deleteError);
-      return NextResponse.json(
-        {
-          error: "게시물 삭제에 실패했습니다.",
-          details: deleteError.message,
-        },
-        { status: 500 },
+      return errorResponse(
+        "게시물 삭제에 실패했습니다",
+        500,
+        "DELETE_POST_ERROR",
       );
     }
 
-    return NextResponse.json({ success: true }, { status: 200 });
+    return successResponse({}, 200);
   } catch (error) {
     console.error("Error in DELETE /api/posts/[postId]:", error);
-    return NextResponse.json(
-      {
-        error: "서버 내부 오류가 발생했습니다",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 },
+    return errorResponse(
+      getErrorMessage(500),
+      500,
+      "INTERNAL_SERVER_ERROR",
     );
   }
 }
