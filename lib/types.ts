@@ -83,6 +83,8 @@ export interface PostWithUserAndStats extends Post {
 
 export interface CommentWithUser extends Comment {
   user: User;
+  likes_count?: number;
+  is_liked?: boolean;
 }
 
 // API 응답 타입

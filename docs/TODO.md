@@ -157,21 +157,31 @@ _업데이트_
 
 ## 6. 댓글 기능
 
-- [ ] `components/comment/CommentList.tsx`
-  - [ ] 댓글 목록 렌더링
-  - [ ] PostCard: 최신 2개만 표시
+- [x] `components/comment/CommentList.tsx`
+  - [x] 댓글 목록 렌더링
+  - [x] PostCard: 최신 2개만 표시
   - [ ] 상세 모달: 전체 댓글 + 스크롤
-  - [ ] 삭제 버튼 (본인만 표시)
-- [ ] `components/comment/CommentForm.tsx`
-  - [ ] 댓글 입력 필드 ("댓글 달기...")
-  - [ ] Enter 키 또는 "게시" 버튼으로 제출
-- [ ] `app/api/comments/route.ts`
-  - [ ] POST: 댓글 작성
-  - [ ] DELETE: 댓글 삭제 (본인만)
-  - [ ] 인증 검증 (Clerk)
-- [ ] PostCard에 댓글 기능 통합
-  - [ ] CommentList 통합
-  - [ ] CommentForm 통합
+  - [x] 삭제 버튼 (본인만 표시)
+- [x] `components/comment/CommentForm.tsx`
+  - [x] 댓글 입력 필드 ("댓글 달기...")
+  - [x] Enter 키 또는 "게시" 버튼으로 제출
+- [x] `app/api/comments/route.ts`
+  - [x] GET: 댓글 목록 조회
+  - [x] POST: 댓글 작성
+  - [x] DELETE: 댓글 삭제 (본인만)
+  - [x] 인증 검증 (Clerk)
+- [x] PostCard에 댓글 기능 통합
+  - [x] CommentList 통합
+  - [x] CommentForm 통합
+
+_업데이트_
+
+- [x] 댓글 좋아요 기능 추가
+  - [x] `comment_likes` 테이블 생성 마이그레이션
+  - [x] `app/api/comment-likes/route.ts` 생성 (POST/DELETE)
+  - [x] 댓글 조회 시 좋아요 수 및 좋아요 여부 포함
+  - [x] CommentList에 좋아요 버튼 추가
+  - [x] 낙관적 UI 업데이트 및 에러 롤백
 
 ## 7. 게시물 상세 모달
 
