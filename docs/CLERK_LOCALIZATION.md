@@ -201,3 +201,7 @@ export default function RootLayout({ children }) {
 - [영어 로컬라이제이션 파일 (GitHub)](https://github.com/clerk/javascript/blob/main/packages/localizations/src/en-US.ts)
 - [한국어 로컬라이제이션 파일 (GitHub)](https://github.com/clerk/javascript/blob/main/packages/localizations/src/ko-KR.ts)
 
+
+
+
+

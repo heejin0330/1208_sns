@@ -89,3 +89,7 @@ COMMENT ON COLUMN public.tasks.user_id IS 'Clerk 사용자 ID (auth.jwt()->>''su
 COMMENT ON COLUMN public.tasks.name IS '할 일 이름';
 COMMENT ON COLUMN public.tasks.completed IS '완료 여부';
 
+
+
+
+

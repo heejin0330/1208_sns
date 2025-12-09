@@ -243,3 +243,7 @@ app/
 - Server Component: `import { createClient } from '@/lib/supabase/server'`
 - Client Component: `import { useClerkSupabaseClient } from '@/lib/supabase/clerk-client'`
 
+
+
+
+
